@@ -7,7 +7,7 @@
 ### Android的WebRtc实现
 > 只需要几行带代码就可以视频通话
 
-### <a name="2">集成</a><a style="float:right;text-decoration:none;" href="#index">[Top]</a>
+### <a name="2">集成</a><a style="float:right;text-decoration:none;" href="#index"></a>
 
 + 在项目级 `build.gradle`添加
 
@@ -58,7 +58,7 @@ EasyRtc.createOffer();
 EasyRtc.release();
 ```
 
-### <a name="3">关于几个重要回调说明</a><a style="float:right;text-decoration:none;" href="#index">[Top]</a>
+### <a name="3">关于几个重要回调说明</a><a style="float:right;text-decoration:none;" href="#index"></a>
 
 ```java
 	/**
@@ -125,5 +125,5 @@ EasyRtc.release();
     }
 ```
 
-### <a name="4">其他问题</a><a style="float:right;text-decoration:none;" href="#index">[Top]</a>
+### <a name="4">其他问题</a><a style="float:right;text-decoration:none;" href="#index"></a>
   参考MainActivity
