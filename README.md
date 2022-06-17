@@ -45,7 +45,7 @@ dependencies {
 ### <a name="3">启动本地视频</a><a style="float:right;text-decoration:none;" href="#index"></a>
 ```java
 // 配置STUN服务器地址，设置回调	
-EasyRtc.create(Constant.STUN, this);
+EasyRtc.create(Constant.STUN, new EasyRtcCallBack);
 EasyRtc.setLocalView(localVideoView);
 EasyRtc.setRemoteView(remoteVideoView);
 // 开启本地视频

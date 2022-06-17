@@ -10,7 +10,7 @@ import org.webrtc.SessionDescription;
  */
 public class WsData {
 
-    public WsData(EventType type, String from, String to){
+    public WsData(EventType type, String from, String to) {
         this.type = type;
         this.from = from;
         this.to = to;

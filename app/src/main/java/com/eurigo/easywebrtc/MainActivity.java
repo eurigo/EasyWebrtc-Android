@@ -1,4 +1,3 @@
-
 package com.eurigo.easywebrtc;
 
 import android.os.Bundle;

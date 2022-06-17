@@ -30,7 +30,6 @@ import org.webrtc.VideoCapturer;
 import org.webrtc.VideoSource;
 import org.webrtc.VideoTrack;
 
-import java.nio.channels.Channel;
 import java.util.ArrayList;
 import java.util.List;
 
