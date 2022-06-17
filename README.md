@@ -1,10 +1,13 @@
 &emsp;&emsp;<a href="#2">集成</a>  
-&emsp;&emsp;<a href="#3">关于几个重要回调说明</a>  
-&emsp;&emsp;<a href="#4">其他问题</a>  
-
+&emsp;&emsp;<a href="#3">启动本地视频</a>  
+&emsp;&emsp;<a href="#4">建立连接</a>  
+&emsp;&emsp;<a href="#5">销毁</a>  
+&emsp;&emsp;<a href="#6">关于几个重要回调说明</a>  
+&emsp;&emsp;<a href="#7">其他问题</a>  
 # EasyWebrtc
 
 ### Android的WebRtc实现
+
 > 只需要几行带代码就可以视频通话
 
 ### <a name="2">集成</a><a style="float:right;text-decoration:none;" href="#index"></a>
@@ -39,7 +42,7 @@ dependencies {
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
 />
 ```
-+ ### 启动本地视频
+### <a name="3">启动本地视频</a><a style="float:right;text-decoration:none;" href="#index"></a>
 ```java
 // 配置STUN服务器地址，设置回调	
 EasyRtc.create(Constant.STUN, this);
@@ -48,17 +51,17 @@ EasyRtc.setRemoteView(remoteVideoView);
 // 开启本地视频
 EasyRtc.startLocalVideo();
 ```
-+ ### 建立连接
+### <a name="4">建立连接</a><a style="float:right;text-decoration:none;" href="#index"></a>
 ```java
 // 配置STUN服务器地址，设置回调	
 EasyRtc.createOffer();
 ```
-+ ### 在onDestory时release
+### <a name="5">销毁</a><a style="float:right;text-decoration:none;" href="#index"></a>
 ```
+// 在onDestory时release
 EasyRtc.release();
 ```
-
-### <a name="3">关于几个重要回调说明</a><a style="float:right;text-decoration:none;" href="#index"></a>
+### <a name="6">关于几个重要回调说明</a><a style="float:right;text-decoration:none;" href="#index"></a>
 
 ```java
 	/**
@@ -125,5 +128,5 @@ EasyRtc.release();
     }
 ```
 
-### <a name="4">其他问题</a><a style="float:right;text-decoration:none;" href="#index"></a>
+### <a name="7">其他问题</a><a style="float:right;text-decoration:none;" href="#index"></a>
   参考MainActivity
