@@ -26,14 +26,38 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_webrtc_connect"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        app:cornerRadius="90dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/btn_webrtc_switch_camera"
+        android:layout_marginBottom="30dp"
+        android:backgroundTint="@android:color/holo_red_dark"
+        app:icon="@drawable/ic_call"
+        app:iconPadding="0dp"
+        app:iconGravity="textEnd"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_webrtc_switch_camera"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        app:cornerRadius="90dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/btn_webrtc_connect"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginBottom="30dp"
         android:backgroundTint="@android:color/holo_red_dark"
-        android:text="连接"
+        app:icon="@drawable/ic_flip_camera"
+        app:iconGravity="textEnd"
+        app:iconPadding="0dp"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
         />
+
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

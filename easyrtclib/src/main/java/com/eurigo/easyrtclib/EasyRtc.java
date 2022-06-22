@@ -13,6 +13,7 @@ import org.webrtc.AudioTrack;
 import org.webrtc.Camera1Enumerator;
 import org.webrtc.Camera2Enumerator;
 import org.webrtc.CameraEnumerator;
+import org.webrtc.CameraVideoCapturer;
 import org.webrtc.DataChannel;
 import org.webrtc.DefaultVideoDecoderFactory;
 import org.webrtc.DefaultVideoEncoderFactory;
@@ -26,7 +27,6 @@ import org.webrtc.RendererCommon;
 import org.webrtc.SessionDescription;
 import org.webrtc.SurfaceTextureHelper;
 import org.webrtc.SurfaceViewRenderer;
-import org.webrtc.VideoCapturer;
 import org.webrtc.VideoSource;
 import org.webrtc.VideoTrack;
 
@@ -52,6 +52,8 @@ public class EasyRtc {
     private static SurfaceViewRenderer mRemoteView;
 
     private static EasyRtcCallBack mCallBack;
+
+    private static CameraVideoCapturer mVideoCapturer;
 
     private static EasyRtcSdpObserver mSdpObserver;
 
@@ -79,6 +81,18 @@ public class EasyRtc {
 
     public static DataChannel getChannel() {
         return channel;
+    }
+
+    public static void switchCamera(){
+        if (mVideoCapturer != null) {
+            mVideoCapturer.switchCamera(null);
+        }
+    }
+
+    public static void switchCamera(CameraVideoCapturer.CameraSwitchHandler cameraSwitchHandler){
+        if (mVideoCapturer != null) {
+            mVideoCapturer.switchCamera(cameraSwitchHandler);
+        }
     }
 
     /**
@@ -156,10 +170,10 @@ public class EasyRtc {
         VideoSource videoSource = peerConnectionFactory.createVideoSource(true);
         SurfaceTextureHelper surfaceTextureHelper = SurfaceTextureHelper.create(Thread.currentThread().getName()
                 , eglBaseContext);
-        VideoCapturer videoCapturer = createCameraCapturer(isUseFront);
-        videoCapturer.initialize(surfaceTextureHelper, ActivityUtils.getTopActivity(), videoSource.getCapturerObserver());
+        mVideoCapturer = createCameraCapturer(isUseFront);
+        mVideoCapturer.initialize(surfaceTextureHelper, ActivityUtils.getTopActivity(), videoSource.getCapturerObserver());
         // 宽,高,帧率
-        videoCapturer.startCapture(Constant.VIDEO_RESOLUTION_WIDTH, Constant.VIDEO_RESOLUTION_HEIGHT, Constant.VIDEO_FPS);
+        mVideoCapturer.startCapture(Constant.VIDEO_RESOLUTION_WIDTH, Constant.VIDEO_RESOLUTION_HEIGHT, Constant.VIDEO_FPS);
         VideoTrack videoTrack = peerConnectionFactory
                 .createVideoTrack(Constant.VIDEO_TRACK_ID, videoSource);
         videoTrack.addSink(mLocalView);
@@ -197,7 +211,7 @@ public class EasyRtc {
      *
      * @return VideoCapturer
      */
-    private static VideoCapturer createCameraCapturer(boolean isUseFront) {
+    private static CameraVideoCapturer createCameraCapturer(boolean isUseFront) {
         Context context = ActivityUtils.getTopActivity();
         if (Camera2Enumerator.isSupported(context)) {
             return createCameraCapturer(new Camera2Enumerator(context), isUseFront);
@@ -206,23 +220,23 @@ public class EasyRtc {
         }
     }
 
-    private static VideoCapturer createCameraCapturer(CameraEnumerator enumerator, boolean isUseFront) {
+    private static CameraVideoCapturer createCameraCapturer(CameraEnumerator enumerator, boolean isUseFront) {
         final String[] deviceNames = enumerator.getDeviceNames();
         // 首先，尝试找到前置摄像头
         for (String deviceName : deviceNames) {
-            LogUtils.dTag(TAG, "尝试查找前置摄像头...");
+            LogUtils.eTag(TAG, "尝试查找前置摄像头...deviceName:" + deviceName);
             if (isUseFront) {
                 if (enumerator.isFrontFacing(deviceName)) {
-                    LogUtils.dTag(TAG, "前置摄像头捕捉器创建成功");
-                    VideoCapturer videoCapturer = enumerator.createCapturer(deviceName, null);
+                    LogUtils.eTag(TAG, "前置摄像头捕捉器创建成功");
+                    CameraVideoCapturer videoCapturer = enumerator.createCapturer(deviceName, null);
                     if (videoCapturer != null) {
                         return videoCapturer;
                     }
                 }
             } else {
                 if (enumerator.isBackFacing(deviceName)) {
-                    LogUtils.dTag(TAG, "后置摄像头捕捉器创建成功");
-                    VideoCapturer videoCapturer = enumerator.createCapturer(deviceName, null);
+                    LogUtils.eTag(TAG, "后置摄像头捕捉器创建成功");
+                    CameraVideoCapturer videoCapturer = enumerator.createCapturer(deviceName, null);
                     if (videoCapturer != null) {
                         return videoCapturer;
                     }

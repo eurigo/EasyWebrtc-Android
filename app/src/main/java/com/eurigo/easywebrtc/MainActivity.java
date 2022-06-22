@@ -21,6 +21,7 @@ import com.eurigo.websocketlib.WsClient;
 import com.eurigo.websocketlib.WsManager;
 
 import org.java_websocket.framing.Framedata;
+import org.webrtc.CameraVideoCapturer;
 import org.webrtc.IceCandidate;
 import org.webrtc.PeerConnection;
 import org.webrtc.SessionDescription;
@@ -46,33 +47,33 @@ public class MainActivity extends AppCompatActivity implements EasyRtcCallBack, 
                 .setListener(this)
                 .setPingInterval(15)
                 .build();
-        WsManager.getInstance().init(wsClient).start();
+//        WsManager.getInstance().init(wsClient).start();
         startWebRtc();
         mBinding.btnWebrtcConnect.setOnClickListener(v -> {
-            // 必要的权限
-            PermissionUtils.permission(PermissionConstants.CAMERA
-                            , PermissionConstants.STORAGE
-                            , PermissionConstants.MICROPHONE)
-                    .callback(new PermissionUtils.SimpleCallback() {
-                        @Override
-                        public void onGranted() {
-                            EasyRtc.createOffer();
-                        }
-
-                        @Override
-                        public void onDenied() {
-                            ToastUtils.showShort("请授予必要权限");
-                        }
-                    })
-                    .request();
+            checkPermission();
+            EasyRtc.createOffer();
         });
+        mBinding.btnWebrtcSwitchCamera.setOnClickListener(v ->
+                EasyRtc.switchCamera()
+        );
     }
 
     private void startWebRtc() {
+        checkPermission();
         EasyRtc.create(Constant.STUN, this);
         EasyRtc.setLocalView(mBinding.localVideoView);
         EasyRtc.setRemoteView(mBinding.remoteVideoView);
         EasyRtc.startLocalVideo();
+    }
+
+    /**
+     * 检查权限并申请
+     */
+    private void checkPermission() {
+        PermissionUtils.permission(PermissionConstants.CAMERA
+                        , PermissionConstants.STORAGE
+                        , PermissionConstants.MICROPHONE)
+                .request();
     }
 
     @Override
