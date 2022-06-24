@@ -1,13 +1,17 @@
 package com.eurigo.easywebrtc;
 
+import android.content.res.ColorStateList;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.blankj.utilcode.constant.PermissionConstants;
+import com.blankj.utilcode.util.ColorUtils;
 import com.blankj.utilcode.util.DeviceUtils;
+import com.blankj.utilcode.util.FileIOUtils;
 import com.blankj.utilcode.util.GsonUtils;
 import com.blankj.utilcode.util.LogUtils;
+import com.blankj.utilcode.util.PathUtils;
 import com.blankj.utilcode.util.PermissionUtils;
 import com.blankj.utilcode.util.ThreadUtils;
 import com.blankj.utilcode.util.ToastUtils;
@@ -21,10 +25,11 @@ import com.eurigo.websocketlib.WsClient;
 import com.eurigo.websocketlib.WsManager;
 
 import org.java_websocket.framing.Framedata;
-import org.webrtc.CameraVideoCapturer;
 import org.webrtc.IceCandidate;
 import org.webrtc.PeerConnection;
 import org.webrtc.SessionDescription;
+
+import java.io.File;
 
 /**
  * @author Eurigo
@@ -33,7 +38,7 @@ import org.webrtc.SessionDescription;
  */
 public class MainActivity extends AppCompatActivity implements EasyRtcCallBack, IWsListener {
 
-    private static final String WS_URL = "ws://aa787e.natappfree.cc/use/" + DeviceUtils.getAndroidID();
+    private static final String WS_URL = "/myWs/" + DeviceUtils.getAndroidID();
     private ActivityMainBinding mBinding;
 
     @Override
@@ -47,14 +52,18 @@ public class MainActivity extends AppCompatActivity implements EasyRtcCallBack, 
                 .setListener(this)
                 .setPingInterval(15)
                 .build();
-//        WsManager.getInstance().init(wsClient).start();
+        WsManager.getInstance().init(wsClient).start();
         startWebRtc();
         mBinding.btnWebrtcConnect.setOnClickListener(v -> {
             checkPermission();
             EasyRtc.createOffer();
         });
-        mBinding.btnWebrtcSwitchCamera.setOnClickListener(v ->
-                EasyRtc.switchCamera()
+        mBinding.btnWebrtcSwitchCamera.setOnClickListener(v -> {
+                    File localSdp = new File(PathUtils.getExternalDownloadsPath() + "/localSdp.txt");
+                    File remoteSdp = new File(PathUtils.getExternalDownloadsPath() + "/remoteSdp.txt");
+                    FileIOUtils.writeFileFromString(localSdp, EasyRtc.getPeerConnection().getLocalDescription().description);
+                    FileIOUtils.writeFileFromString(remoteSdp, EasyRtc.getPeerConnection().getRemoteDescription().description);
+                }
         );
     }
 
@@ -118,7 +127,7 @@ public class MainActivity extends AppCompatActivity implements EasyRtcCallBack, 
     public void onRtcConnected() {
         ThreadUtils.runOnUiThread(() -> {
             mBinding.btnWebrtcConnect.setEnabled(false);
-            mBinding.btnWebrtcConnect.setText("已连接");
+            mBinding.btnWebrtcConnect.setBackgroundTintList(ColorStateList.valueOf(ColorUtils.getColor(R.color.green)));
         });
     }
 
@@ -126,25 +135,28 @@ public class MainActivity extends AppCompatActivity implements EasyRtcCallBack, 
     public void onRtcDisconnect() {
         ThreadUtils.runOnUiThread(() -> {
             mBinding.btnWebrtcConnect.setEnabled(true);
-            mBinding.btnWebrtcConnect.setText("连接");
+            mBinding.btnWebrtcConnect.setBackgroundTintList(ColorStateList.valueOf(ColorUtils.getColor(R.color.red)));
         });
     }
 
     @Override
     public void onRtcConnectFailed() {
         EasyRtcCallBack.super.onRtcConnectFailed();
-        ToastUtils.showShort("连接失败");
-        finish();
+        ThreadUtils.runOnUiThread(() -> {
+            ToastUtils.showShort("Rtc连接失败");
+            mBinding.btnWebrtcConnect.setEnabled(true);
+        });
+
     }
 
     @Override
     public void onConnected(WsClient client) {
-        ToastUtils.showShort("连接成功");
+        ToastUtils.showShort("WS连接成功");
     }
 
     @Override
     public void onDisconnect(WsClient client, DisConnectReason reason) {
-        ToastUtils.showShort("连接断开");
+        ToastUtils.showShort("WS连接断开");
     }
 
     @Override
