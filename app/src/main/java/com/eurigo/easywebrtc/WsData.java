@@ -10,24 +10,18 @@ import org.webrtc.SessionDescription;
  */
 public class WsData {
 
-    public WsData(EventType type, String from, String to) {
-        this.type = type;
-        this.from = from;
-        this.to = to;
-    }
-
-    private IceCandidate iceCandidate;
     private SessionDescription sessionDescription;
-    private String from;
-    private String to;
-    private EventType type;
+    private IceCandidate iceCandidate;
+    private String phone;
+    private int code;
+    private String message;
+    private String data;
+    private boolean isReceived;
 
-    public IceCandidate getIceCandidate() {
-        return iceCandidate;
-    }
-
-    public void setIceCandidate(IceCandidate iceCandidate) {
-        this.iceCandidate = iceCandidate;
+    public WsData(String phone, int code, String message) {
+        this.phone = phone;
+        this.code = code;
+        this.message = message;
     }
 
     public SessionDescription getSessionDescription() {
@@ -38,35 +32,47 @@ public class WsData {
         this.sessionDescription = sessionDescription;
     }
 
-    public String getFrom() {
-        return from;
+    public IceCandidate getIceCandidate() {
+        return iceCandidate;
     }
 
-    public void setFrom(String from) {
-        this.from = from;
-    }
-
-    public String getTo() {
-        return to;
-    }
-
-    public void setTo(String to) {
-        this.to = to;
-    }
-
-    public EventType getType() {
-        return type;
-    }
-
-    public void setType(EventType type) {
-        this.type = type;
-    }
-
-    public WsData(IceCandidate iceCandidate, SessionDescription sessionDescription, String from, String to, EventType type) {
+    public void setIceCandidate(IceCandidate iceCandidate) {
         this.iceCandidate = iceCandidate;
-        this.sessionDescription = sessionDescription;
-        this.from = from;
-        this.to = to;
-        this.type = type;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public int getCode() {
+        return code;
+    }
+
+    public void setCode(int code) {
+        this.code = code;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public String getData() {
+        return data;
+    }
+
+    public void setData(String data) {
+        this.data = data;
+    }
+
+    public boolean isReceived() {
+        return isReceived;
     }
 }

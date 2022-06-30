@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 
 import com.blankj.utilcode.util.ActivityUtils;
 import com.blankj.utilcode.util.LogUtils;
+import com.blankj.utilcode.util.ToastUtils;
 import com.blankj.utilcode.util.Utils;
 
 import org.webrtc.AudioSource;
@@ -30,6 +31,7 @@ import org.webrtc.SurfaceViewRenderer;
 import org.webrtc.VideoSource;
 import org.webrtc.VideoTrack;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,7 +57,27 @@ public class EasyRtc {
 
     private static CameraVideoCapturer mVideoCapturer;
 
+    private static VideoTrack mVideoTrack;
+
     private static EasyRtcSdpObserver mSdpObserver;
+
+    private static RecorderRenderer recorderLocal;
+    private static RecorderRenderer recorderRemote;
+    private static VideoTrack remoteVideoTrack;
+
+    public static void setRemoteVideoTrack(VideoTrack remoteVideoTrack) {
+        EasyRtc.remoteVideoTrack = remoteVideoTrack;
+    }
+
+    /**
+     * 本地录制是否开启
+     */
+    private static boolean isRecordingLocal = false;
+
+    /**
+     * 远程录制是否开启
+     */
+    private static boolean isRecordingRemote = false;
 
     public static SurfaceViewRenderer getRemoteView() {
         return mRemoteView;
@@ -83,15 +105,83 @@ public class EasyRtc {
         return channel;
     }
 
-    public static void switchCamera(){
+    public static void switchCamera() {
         if (mVideoCapturer != null) {
             mVideoCapturer.switchCamera(null);
         }
     }
 
-    public static void switchCamera(CameraVideoCapturer.CameraSwitchHandler cameraSwitchHandler){
+    public static void switchCamera(CameraVideoCapturer.CameraSwitchHandler cameraSwitchHandler) {
         if (mVideoCapturer != null) {
             mVideoCapturer.switchCamera(cameraSwitchHandler);
+        }
+    }
+
+    /**
+     * 录制本地视频，必须调用stopRecorder(), 否则视频黑屏
+     *
+     * @param savePath
+     */
+    public static void startRecorderLocal(String savePath) {
+        if (isRecordingLocal) {
+            ToastUtils.showShort("本地录制已开启");
+            return;
+        }
+        try {
+            recorderLocal = new RecorderRenderer(savePath, eglBaseContext);
+            mVideoTrack.addSink(recorderLocal);
+            isRecordingLocal = true;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 停止录制，
+     */
+    public static void stopRecorderLocal() {
+        if (recorderLocal != null) {
+            mVideoTrack.removeSink(recorderLocal);
+            recorderLocal.release();
+            recorderLocal = null;
+            isRecordingLocal = false;
+        }
+    }
+
+    /**
+     * 开始录制远端视频
+     *
+     * 远端的录制在EasyRtc.OnAddStream()
+     *
+     * @param savePath
+     */
+    public static void startRecorderRemote(String savePath) {
+        if (isRecordingRemote) {
+            ToastUtils.showShort("远程录制已开启");
+            return;
+        }
+        if (remoteVideoTrack == null) {
+            ToastUtils.showShort("远程连接未建立");
+            return;
+        }
+        try {
+            recorderRemote = new RecorderRenderer(savePath, eglBaseContext);
+            remoteVideoTrack.addSink(recorderRemote);
+            isRecordingRemote = true;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 停止录制远端视频
+     */
+    public static void stopRecorderRemote() {
+        if (recorderRemote != null) {
+            remoteVideoTrack.removeSink(recorderLocal);
+            recorderRemote.release();
+            recorderRemote = null;
+            isRecordingRemote = false;
         }
     }
 
@@ -174,13 +264,14 @@ public class EasyRtc {
         mVideoCapturer.initialize(surfaceTextureHelper, ActivityUtils.getTopActivity(), videoSource.getCapturerObserver());
         // 宽,高,帧率
         mVideoCapturer.startCapture(Constant.VIDEO_RESOLUTION_WIDTH, Constant.VIDEO_RESOLUTION_HEIGHT, Constant.VIDEO_FPS);
-        VideoTrack videoTrack = peerConnectionFactory
+        mVideoTrack = peerConnectionFactory
                 .createVideoTrack(Constant.VIDEO_TRACK_ID, videoSource);
-        videoTrack.addSink(mLocalView);
+        mVideoTrack.addSink(mLocalView);
+
         MediaStream localMediaStream = peerConnectionFactory
                 .createLocalMediaStream(Constant.LOCAL_VIDEO_STREAM);
-        localMediaStream.addTrack(videoTrack);
-        peerConnection.addTrack(videoTrack, streamList);
+        localMediaStream.addTrack(mVideoTrack);
+        peerConnection.addTrack(mVideoTrack, streamList);
         peerConnection.addStream(localMediaStream);
         if (isOpenAudio) {
             startLocalAudioCapture();
@@ -224,7 +315,6 @@ public class EasyRtc {
         final String[] deviceNames = enumerator.getDeviceNames();
         // 首先，尝试找到前置摄像头
         for (String deviceName : deviceNames) {
-            LogUtils.eTag(TAG, "尝试查找前置摄像头...deviceName:" + deviceName);
             if (isUseFront) {
                 if (enumerator.isFrontFacing(deviceName)) {
                     LogUtils.eTag(TAG, "前置摄像头捕捉器创建成功");
@@ -253,13 +343,13 @@ public class EasyRtc {
         //语音
         MediaConstraints audioConstraints = new MediaConstraints();
         //回声消除
-        audioConstraints.mandatory.add(new MediaConstraints.KeyValuePair("googEchoCancellation", "true"));
+        audioConstraints.mandatory.add(new MediaConstraints.KeyValuePair("googEchoCancellation", "false"));
         //自动增益
-        audioConstraints.mandatory.add(new MediaConstraints.KeyValuePair("googAutoGainControl", "true"));
+        audioConstraints.mandatory.add(new MediaConstraints.KeyValuePair("googAutoGainControl", "false"));
         //高音过滤
-        audioConstraints.mandatory.add(new MediaConstraints.KeyValuePair("googHighpassFilter", "true"));
+        audioConstraints.mandatory.add(new MediaConstraints.KeyValuePair("googHighpassFilter", "false"));
         //噪音处理
-        audioConstraints.mandatory.add(new MediaConstraints.KeyValuePair("googNoiseSuppression", "true"));
+        audioConstraints.mandatory.add(new MediaConstraints.KeyValuePair("googNoiseSuppression", "false"));
         AudioSource audioSource = peerConnectionFactory.createAudioSource(audioConstraints);
         AudioTrack audioTrack = peerConnectionFactory.createAudioTrack(Constant.AUDIO_TRACK_ID, audioSource);
         MediaStream localMediaStream = peerConnectionFactory.createLocalMediaStream(Constant.LOCAL_AUDIO_STREAM);
@@ -384,6 +474,13 @@ public class EasyRtc {
             streamList.clear();
             streamList = null;
         }
+        if (isRecordingLocal){
+            recorderLocal.release();
+        }
+        if (isRecordingRemote){
+            recorderRemote.release();
+        }
+        recorderRemote = null;
         mCallBack = null;
     }
 }

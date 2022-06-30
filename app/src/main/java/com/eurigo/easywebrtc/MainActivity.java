@@ -3,17 +3,19 @@ package com.eurigo.easywebrtc;
 import android.content.res.ColorStateList;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.blankj.utilcode.constant.PermissionConstants;
+import com.blankj.utilcode.util.ActivityUtils;
 import com.blankj.utilcode.util.ColorUtils;
 import com.blankj.utilcode.util.DeviceUtils;
-import com.blankj.utilcode.util.FileIOUtils;
 import com.blankj.utilcode.util.GsonUtils;
 import com.blankj.utilcode.util.LogUtils;
 import com.blankj.utilcode.util.PathUtils;
 import com.blankj.utilcode.util.PermissionUtils;
 import com.blankj.utilcode.util.ThreadUtils;
+import com.blankj.utilcode.util.TimeUtils;
 import com.blankj.utilcode.util.ToastUtils;
 import com.eurigo.easyrtclib.Constant;
 import com.eurigo.easyrtclib.EasyRtc;
@@ -29,7 +31,7 @@ import org.webrtc.IceCandidate;
 import org.webrtc.PeerConnection;
 import org.webrtc.SessionDescription;
 
-import java.io.File;
+import java.util.List;
 
 /**
  * @author Eurigo
@@ -38,7 +40,8 @@ import java.io.File;
  */
 public class MainActivity extends AppCompatActivity implements EasyRtcCallBack, IWsListener {
 
-    private static final String WS_URL = "/myWs/" + DeviceUtils.getAndroidID();
+    private static final String WS_URL = "ws://a3tqj6.natappfree.cc/myWs/" + DeviceUtils.getAndroidID();
+    private static final String VIDEO_PATH = PathUtils.getExternalDownloadsPath()+ "/"+TimeUtils.getNowString()+".mp4";
     private ActivityMainBinding mBinding;
 
     @Override
@@ -50,77 +53,96 @@ public class MainActivity extends AppCompatActivity implements EasyRtcCallBack, 
         WsClient wsClient = new WsClient.Builder()
                 .setServerUrl(WS_URL)
                 .setListener(this)
-                .setPingInterval(15)
+                .setPingInterval(60)
                 .build();
         WsManager.getInstance().init(wsClient).start();
         startWebRtc();
         mBinding.btnWebrtcConnect.setOnClickListener(v -> {
-            checkPermission();
-            EasyRtc.createOffer();
+            createOffer();
+        });
+        mBinding.remoteVideoView.setOnClickListener(v -> {
+            EasyRtc.startRecorderRemote(VIDEO_PATH);
         });
         mBinding.btnWebrtcSwitchCamera.setOnClickListener(v -> {
-                    File localSdp = new File(PathUtils.getExternalDownloadsPath() + "/localSdp.txt");
-                    File remoteSdp = new File(PathUtils.getExternalDownloadsPath() + "/remoteSdp.txt");
-                    FileIOUtils.writeFileFromString(localSdp, EasyRtc.getPeerConnection().getLocalDescription().description);
-                    FileIOUtils.writeFileFromString(remoteSdp, EasyRtc.getPeerConnection().getRemoteDescription().description);
-                }
-        );
+            EasyRtc.stopRecorderRemote();
+        });
     }
 
     private void startWebRtc() {
-        checkPermission();
-        EasyRtc.create(Constant.STUN, this);
-        EasyRtc.setLocalView(mBinding.localVideoView);
-        EasyRtc.setRemoteView(mBinding.remoteVideoView);
-        EasyRtc.startLocalVideo();
+        PermissionUtils.permission(PermissionConstants.CAMERA
+                        , PermissionConstants.STORAGE
+                        , PermissionConstants.MICROPHONE)
+                .callback(new PermissionUtils.SingleCallback() {
+                    @Override
+                    public void callback(boolean isAllGranted, @NonNull List<String> granted, @NonNull List<String> deniedForever, @NonNull List<String> denied) {
+                        if (isAllGranted) {
+                            EasyRtc.create(Constant.STUN, (MainActivity) ActivityUtils.getTopActivity());
+                            EasyRtc.setLocalView(mBinding.localVideoView);
+                            EasyRtc.setRemoteView(mBinding.remoteVideoView);
+                            EasyRtc.startLocalVideo();
+                        }
+                    }
+                })
+                .request();
     }
 
     /**
      * 检查权限并申请
      */
-    private void checkPermission() {
+    private void createOffer() {
         PermissionUtils.permission(PermissionConstants.CAMERA
                         , PermissionConstants.STORAGE
                         , PermissionConstants.MICROPHONE)
+                .callback(new PermissionUtils.SingleCallback() {
+                    @Override
+                    public void callback(boolean isAllGranted, @NonNull List<String> granted, @NonNull List<String> deniedForever, @NonNull List<String> denied) {
+                        if (isAllGranted) {
+                            EasyRtc.createOffer();
+                        }
+                    }
+                })
                 .request();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        EasyRtc.getRemoteView().clearImage();
+        if (EasyRtc.getPeerConnection() != null) {
+            EasyRtc.getRemoteView().clearImage();
+        }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         EasyRtc.release();
+        WsManager.getInstance().destroy();
     }
 
     @Override
     public void onSendIce(IceCandidate iceCandidate) {
-        WsData wsData = new WsData(EventType.SEND_ICE, DeviceUtils.getAndroidID(), "");
+        WsData wsData = new WsData("13888886666", CodeConstant.ICE, "ice");
         wsData.setIceCandidate(iceCandidate);
         WsManager.getInstance().send(GsonUtils.toJson(wsData));
     }
 
     @Override
     public void onSendOffer(SessionDescription sessionDescription) {
-        WsData wsData = new WsData(EventType.SEND_OFFER, DeviceUtils.getAndroidID(), "");
+        WsData wsData = new WsData("13888886666", CodeConstant.SDP, "sdp");
         wsData.setSessionDescription(sessionDescription);
         WsManager.getInstance().send(GsonUtils.toJson(wsData));
     }
 
     @Override
     public void onSendAnswer(SessionDescription sessionDescription) {
-        WsData wsData = new WsData(EventType.SEND_ANSWER, DeviceUtils.getAndroidID(), "");
+        WsData wsData = new WsData("13888886666", CodeConstant.SDP, "sdp");
         wsData.setSessionDescription(sessionDescription);
         WsManager.getInstance().send(GsonUtils.toJson(wsData));
     }
 
     @Override
     public void onConnectStateChange(PeerConnection.PeerConnectionState newState) {
-        LogUtils.eTag("State", newState.name());
+        LogUtils.eTag("xxx", newState.name());
     }
 
     @Override
@@ -151,33 +173,36 @@ public class MainActivity extends AppCompatActivity implements EasyRtcCallBack, 
 
     @Override
     public void onConnected(WsClient client) {
-        ToastUtils.showShort("WS连接成功");
+        // 连接成功发送注册事件
+        WsData wsData = new WsData("13888886666", CodeConstant.REGISTER, "register");
+        WsManager.getInstance().send(GsonUtils.toJson(wsData));
     }
 
     @Override
     public void onDisconnect(WsClient client, DisConnectReason reason) {
-        ToastUtils.showShort("WS连接断开");
+        LogUtils.eTag("xxx", "WS连接断开");
     }
 
     @Override
     public void onMessage(WsClient client, String message) {
-        // 收到服务器的广播消息
+        LogUtils.eTag("xxx", message);
         // 1、解析消息
         WsData wsData = GsonUtils.fromJson(message, WsData.class);
-        switch (wsData.getType()) {
-            // 2、如果不是自己发的offer，则设置为远程sdp
-            // 3、EasyRtcCallBack.onSendAnswer发送answer给服务器
-            case SEND_OFFER:
-                // 4、如果不是自己发的Answer，则设置为远程sdp
-            case SEND_ANSWER:
-                // offer和answer都是sdp, 他是相对于发送方和接收方的
-                if (!wsData.getFrom().equals(DeviceUtils.getAndroidID())) {
+        switch (wsData.getCode()) {
+            case CodeConstant.REGISTER_SUCCESS:
+            case CodeConstant.NOT_ONLINE:
+            case CodeConstant.MUST_RECONNECT:
+                ToastUtils.showShort(wsData.getMessage());
+                break;
+            case CodeConstant.BEAUTY:
+            case CodeConstant.SDP:
+                if (wsData.isReceived()){
                     EasyRtc.setRemoteSdp(wsData.getSessionDescription());
                     EasyRtc.createAnswer();
                 }
                 break;
-            case SEND_ICE:
-                if (!wsData.getFrom().equals(DeviceUtils.getAndroidID())) {
+            case CodeConstant.ICE:
+                if (wsData.isReceived()) {
                     EasyRtc.setRemoteIce(wsData.getIceCandidate());
                 }
                 break;
@@ -188,10 +213,12 @@ public class MainActivity extends AppCompatActivity implements EasyRtcCallBack, 
 
     @Override
     public void onPing(WsClient wsClient, Framedata frameData) {
+        LogUtils.eTag("xxx", "onPing");
     }
 
     @Override
     public void onPong(WsClient client, Framedata frameData) {
+        LogUtils.eTag("xxx", "onPong");
     }
 
     @Override

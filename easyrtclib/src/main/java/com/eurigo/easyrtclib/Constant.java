@@ -19,7 +19,7 @@ public class Constant {
     /**
      * 声音调节
      */
-    public static final int VOLUME = 30;
+    public static final int VOLUME = 3;
 
     public static final String VIDEO_TRACK_ID = "videtrack";
     public static final String AUDIO_TRACK_ID = "audiotrack";

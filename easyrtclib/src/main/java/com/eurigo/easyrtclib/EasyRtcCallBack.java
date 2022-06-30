@@ -47,6 +47,7 @@ public interface EasyRtcCallBack {
         List<VideoTrack> videoTracks = mediaStream.videoTracks;
         if (videoTracks != null && videoTracks.size() > 0) {
             VideoTrack videoTrack = videoTracks.get(0);
+            EasyRtc.setRemoteVideoTrack(videoTrack);
             if (videoTrack != null && EasyRtc.getRemoteView() != null) {
                 videoTrack.addSink(EasyRtc.getRemoteView());
             }
