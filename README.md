@@ -6,7 +6,7 @@
 <a href="#6">关于几个重要回调说明</a>  
 <a href="#7">其他问题</a>  
 
-# EasyWebrtc-Android
+# EasyWebrtc-Android[![](https://jitpack.io/v/eurigo/EasyWebrtc.svg)](https://jitpack.io/#eurigo/EasyWebrtc)
 
 ### Android的WebRtc实现
 
@@ -24,9 +24,10 @@ allprojects {
 }
 ```
 
-+ 在app模块下的`build.gradle`文件中加入，Tag[![](https://jitpack.io/v/eurigo/EasyWebrtc.svg)](https://jitpack.io/#eurigo/EasyWebrtc)
++ 在app模块下的`build.gradle`文件中加入
 ```groovy
 dependencies {
+    // 请用最后release版本替换Tag
     implementation 'com.github.eurigo:EasyWebrtc:Tag'
 }
 ```
