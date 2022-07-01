@@ -1,16 +1,18 @@
-&emsp;&emsp;<a href="#2">集成</a>  
-&emsp;&emsp;<a href="#3">启动本地视频</a>  
-&emsp;&emsp;<a href="#4">建立连接</a>  
-&emsp;&emsp;<a href="#5">销毁</a>  
-&emsp;&emsp;<a href="#6">关于几个重要回调说明</a>  
-&emsp;&emsp;<a href="#7">其他问题</a>  
-# EasyWebrtc
+<a href="#2">集成</a>  
+<a href="#3">开启摄像头</a>  
+<a href="#4">建立连接</a>  
+<a href="#4-1">视频录制</a>  
+<a href="#5">销毁</a>  
+<a href="#6">关于几个重要回调说明</a>  
+<a href="#7">其他问题</a>  
+
+# EasyWebrtc-Android[![](https://jitpack.io/v/eurigo/EasyWebrtc.svg)](https://jitpack.io/#eurigo/EasyWebrtc)
 
 ### Android的WebRtc实现
 
 > 只需要几行带代码就可以视频通话
 
-### <a name="2">集成</a><a style="float:right;text-decoration:none;" href="#index"></a>
+### <a name="2">集成</a>
 
 + 在项目级 `build.gradle`添加
 
@@ -22,9 +24,10 @@ allprojects {
 }
 ```
 
-+ 在app模块下的`build.gradle`文件中加入，Tag[![](https://jitpack.io/v/eurigo/EasyWebrtc.svg)](https://jitpack.io/#eurigo/EasyWebrtc)
++ 在app模块下的`build.gradle`文件中加入
 ```groovy
 dependencies {
+    // 请用最后release版本替换Tag
     implementation 'com.github.eurigo:EasyWebrtc:Tag'
 }
 ```
@@ -42,7 +45,7 @@ dependencies {
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
 />
 ```
-### <a name="3">启动本地视频</a><a style="float:right;text-decoration:none;" href="#index"></a>
+### <a name="3">开启摄像头</a>
 ```java
 // 配置STUN服务器地址，设置回调	
 EasyRtc.create(Constant.STUN, new EasyRtcCallBack);
@@ -51,18 +54,27 @@ EasyRtc.setRemoteView(remoteVideoView);
 // 开启本地视频
 EasyRtc.startLocalVideo();
 ```
-### <a name="4">建立连接</a><a style="float:right;text-decoration:none;" href="#index"></a>
+### <a name="4">建立连接</a>
 ```java
 // 配置STUN服务器地址，设置回调	
 EasyRtc.createOffer();
 ```
-### <a name="5">销毁</a><a style="float:right;text-decoration:none;" href="#index"></a>
+### <a name="4-1">视频录制</a>
+> 视频录制分为录制远程和录制本地，start和stop需成对出现
+```java
+// 开启录制本地源 	
+EasyRtc.startRecorderLocal(String savePath);
+EasyRtc.stopRecorderLocal();
+// 开启录制远程源
+EasyRtc.startRecorderRemote(String savePath);
+EasyRtc.stopRecorderRemote();
+```
+### <a name="5">销毁</a>
 ```
 // 在onDestory时release
 EasyRtc.release();
 ```
-### <a name="6">关于几个重要回调说明</a><a style="float:right;text-decoration:none;" href="#index"></a>
-
+### <a name="6">关于几个重要回调说明</a>
 ```java
 	/**
      * 发送 offer sdp
@@ -128,5 +140,5 @@ EasyRtc.release();
     }
 ```
 
-### <a name="7">其他问题</a><a style="float:right;text-decoration:none;" href="#index"></a>
+### <a name="7">其他问题</a>
   参考MainActivity
