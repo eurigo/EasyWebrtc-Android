@@ -75,7 +75,6 @@ EasyRtc.stopRecorderRemote();
 EasyRtc.release();
 ```
 ### <a name="6">关于几个重要回调说明</a>
-
 ```java
 	/**
      * 发送 offer sdp
