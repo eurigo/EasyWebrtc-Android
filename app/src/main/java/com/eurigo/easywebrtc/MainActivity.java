@@ -1,7 +1,9 @@
 package com.eurigo.easywebrtc;
 
+import android.annotation.SuppressLint;
 import android.content.res.ColorStateList;
 import android.os.Bundle;
+import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -10,6 +12,7 @@ import com.blankj.utilcode.constant.PermissionConstants;
 import com.blankj.utilcode.util.ActivityUtils;
 import com.blankj.utilcode.util.ColorUtils;
 import com.blankj.utilcode.util.DeviceUtils;
+import com.blankj.utilcode.util.FileUtils;
 import com.blankj.utilcode.util.GsonUtils;
 import com.blankj.utilcode.util.LogUtils;
 import com.blankj.utilcode.util.PathUtils;
@@ -38,11 +41,15 @@ import java.util.List;
  * Created on 2022/6/09 17:45
  * desc   :
  */
-public class MainActivity extends AppCompatActivity implements EasyRtcCallBack, IWsListener {
+public class MainActivity extends AppCompatActivity implements EasyRtcCallBack, IWsListener
+        , View.OnClickListener {
 
     private static final String WS_URL = "ws://a3tqj6.natappfree.cc/myWs/" + DeviceUtils.getAndroidID();
-    private static final String VIDEO_PATH = PathUtils.getExternalDownloadsPath()+ "/"+TimeUtils.getNowString()+".mp4";
+    private static final String LOCAL_VIDEO_PATH = PathUtils.getExternalDownloadsPath() + "/local_";
+    private static final String REMOTE_VIDEO_PATH = PathUtils.getExternalDownloadsPath() + "/remote_";
     private ActivityMainBinding mBinding;
+
+    private boolean isRtcConnect = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,15 +64,10 @@ public class MainActivity extends AppCompatActivity implements EasyRtcCallBack, 
                 .build();
         WsManager.getInstance().init(wsClient).start();
         startWebRtc();
-        mBinding.btnWebrtcConnect.setOnClickListener(v -> {
-            createOffer();
-        });
-        mBinding.remoteVideoView.setOnClickListener(v -> {
-            EasyRtc.startRecorderRemote(VIDEO_PATH);
-        });
-        mBinding.btnWebrtcSwitchCamera.setOnClickListener(v -> {
-            EasyRtc.stopRecorderRemote();
-        });
+        mBinding.btnWebrtcConnect.setOnClickListener(this);
+        mBinding.btnWebrtcSwitchCamera.setOnClickListener(this);
+        mBinding.btnRecorderLocal.setOnClickListener(this);
+        mBinding.btnRecorderRemote.setOnClickListener(this);
     }
 
     private void startWebRtc() {
@@ -84,6 +86,57 @@ public class MainActivity extends AppCompatActivity implements EasyRtcCallBack, 
                     }
                 })
                 .request();
+    }
+
+    @SuppressLint("NonConstantResourceId")
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.btn_webrtc_connect:
+                // 视频连接
+                createOffer();
+                break;
+            case R.id.btn_webrtc_switch_camera:
+                // 切换摄像头
+                EasyRtc.switchCamera();
+                break;
+            case R.id.btn_recorder_local:
+                // 本地视频录制
+                String fileName = LOCAL_VIDEO_PATH + TimeUtils.getNowString() + ".mp4";
+                if (EasyRtc.isIsRecordingLocal()) {
+                    EasyRtc.stopRecorderLocal();
+                    mBinding.btnRecorderLocal.setText("录制本地");
+                    if (FileUtils.isFileExists(fileName)) {
+                        ToastUtils.showLong("本地视频录制成功\n" + fileName);
+                    }
+                } else {
+                    EasyRtc.startRecorderLocal(fileName);
+                    mBinding.btnRecorderLocal.setText("停止本地");
+                    ToastUtils.showShort("开始本地视频录制");
+                }
+                break;
+            case R.id.btn_recorder_remote:
+                // 远程视频录制
+                if (!isRtcConnect) {
+                    ToastUtils.showShort("远程连接未建立");
+                    return;
+                }
+                String remoteName = REMOTE_VIDEO_PATH + TimeUtils.getNowString() + ".mp4";
+                if (EasyRtc.isIsRecordingRemote()) {
+                    EasyRtc.stopRecorderRemote();
+                    mBinding.btnRecorderRemote.setText("录制远程");
+                    if (FileUtils.isFileExists(remoteName)) {
+                        ToastUtils.showLong("远程视频录制成功\n" + remoteName);
+                    }
+                } else {
+                    EasyRtc.startRecorderRemote(remoteName);
+                    mBinding.btnRecorderRemote.setText("停止远程");
+                    ToastUtils.showShort("开始远程视频录制");
+                }
+                break;
+            default:
+                break;
+        }
     }
 
     /**
@@ -147,6 +200,7 @@ public class MainActivity extends AppCompatActivity implements EasyRtcCallBack, 
 
     @Override
     public void onRtcConnected() {
+        isRtcConnect = true;
         ThreadUtils.runOnUiThread(() -> {
             mBinding.btnWebrtcConnect.setEnabled(false);
             mBinding.btnWebrtcConnect.setBackgroundTintList(ColorStateList.valueOf(ColorUtils.getColor(R.color.green)));
@@ -155,6 +209,7 @@ public class MainActivity extends AppCompatActivity implements EasyRtcCallBack, 
 
     @Override
     public void onRtcDisconnect() {
+        isRtcConnect = false;
         ThreadUtils.runOnUiThread(() -> {
             mBinding.btnWebrtcConnect.setEnabled(true);
             mBinding.btnWebrtcConnect.setBackgroundTintList(ColorStateList.valueOf(ColorUtils.getColor(R.color.red)));
@@ -163,7 +218,7 @@ public class MainActivity extends AppCompatActivity implements EasyRtcCallBack, 
 
     @Override
     public void onRtcConnectFailed() {
-        EasyRtcCallBack.super.onRtcConnectFailed();
+        isRtcConnect = false;
         ThreadUtils.runOnUiThread(() -> {
             ToastUtils.showShort("Rtc连接失败");
             mBinding.btnWebrtcConnect.setEnabled(true);

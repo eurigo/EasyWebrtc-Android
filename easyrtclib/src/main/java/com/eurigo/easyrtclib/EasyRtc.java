@@ -65,10 +65,6 @@ public class EasyRtc {
     private static RecorderRenderer recorderRemote;
     private static VideoTrack remoteVideoTrack;
 
-    public static void setRemoteVideoTrack(VideoTrack remoteVideoTrack) {
-        EasyRtc.remoteVideoTrack = remoteVideoTrack;
-    }
-
     /**
      * 本地录制是否开启
      */
@@ -78,6 +74,18 @@ public class EasyRtc {
      * 远程录制是否开启
      */
     private static boolean isRecordingRemote = false;
+
+    public static boolean isIsRecordingLocal() {
+        return isRecordingLocal;
+    }
+
+    public static boolean isIsRecordingRemote() {
+        return isRecordingRemote && remoteVideoTrack != null;
+    }
+
+    public static void setRemoteVideoTrack(VideoTrack remoteVideoTrack) {
+        EasyRtc.remoteVideoTrack = remoteVideoTrack;
+    }
 
     public static SurfaceViewRenderer getRemoteView() {
         return mRemoteView;

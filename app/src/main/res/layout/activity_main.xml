@@ -21,8 +21,29 @@
         android:layout_height="210dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:layout_margin="20dp"
-        />
+        android:layout_margin="20dp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_recorder_local"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toTopOf="@+id/btn_webrtc_connect"
+        app:layout_constraintStart_toStartOf="@id/btn_webrtc_connect"
+        app:layout_constraintEnd_toEndOf="@+id/btn_webrtc_connect"
+        android:layout_marginBottom="30dp"
+        android:backgroundTint="@android:color/holo_blue_dark"
+        android:text="录制本地" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_recorder_remote"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toTopOf="@+id/btn_webrtc_switch_camera"
+        app:layout_constraintStart_toStartOf="@+id/btn_webrtc_switch_camera"
+        app:layout_constraintEnd_toEndOf="@+id/btn_webrtc_switch_camera"
+        android:layout_marginBottom="30dp"
+        android:backgroundTint="@android:color/holo_blue_dark"
+        android:text="录制远程" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_webrtc_connect"
