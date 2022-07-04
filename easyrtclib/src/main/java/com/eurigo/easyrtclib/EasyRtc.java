@@ -8,6 +8,9 @@ import com.blankj.utilcode.util.ActivityUtils;
 import com.blankj.utilcode.util.LogUtils;
 import com.blankj.utilcode.util.ToastUtils;
 import com.blankj.utilcode.util.Utils;
+import com.eurigo.easyrtclib.observer.DateChannelObserver;
+import com.eurigo.easyrtclib.observer.EasyRtcSdpObserver;
+import com.eurigo.easyrtclib.observer.PeerConnectionObserver;
 
 import org.webrtc.AudioSource;
 import org.webrtc.AudioTrack;
@@ -59,11 +62,12 @@ public class EasyRtc {
 
     private static VideoTrack mVideoTrack;
 
+    private static VideoTrack remoteVideoTrack;
+
     private static EasyRtcSdpObserver mSdpObserver;
 
     private static RecorderRenderer recorderLocal;
     private static RecorderRenderer recorderRemote;
-    private static VideoTrack remoteVideoTrack;
 
     /**
      * 本地录制是否开启
@@ -101,10 +105,6 @@ public class EasyRtc {
         mRemoteView.setEnableHardwareScaler(false);
     }
 
-    public static List<PeerConnection.IceServer> getIceServers() {
-        return iceServers;
-    }
-
     public static PeerConnection getPeerConnection() {
         return peerConnection;
     }
@@ -128,7 +128,7 @@ public class EasyRtc {
     /**
      * 录制本地视频，必须调用stopRecorder(), 否则视频黑屏
      *
-     * @param savePath
+     * @param savePath 保存路径
      */
     public static void startRecorderLocal(String savePath) {
         if (isRecordingLocal) {
@@ -158,12 +158,12 @@ public class EasyRtc {
 
     /**
      * 开始录制远端视频
-     *
+     * <p>
      * 远端的录制在EasyRtc.OnAddStream()
      *
-     * @param savePath
+     * @param savePath 视频文件保存路径
      */
-    public static void startRecorderRemote(String savePath) {
+    public static void startRecorderRemote(String savePath, boolean isRecordAudio, String audioSavePath) {
         if (isRecordingRemote) {
             ToastUtils.showShort("远程录制已开启");
             return;
@@ -175,6 +175,9 @@ public class EasyRtc {
         try {
             recorderRemote = new RecorderRenderer(savePath, eglBaseContext);
             remoteVideoTrack.addSink(recorderRemote);
+            if (isRecordAudio) {
+                AudioRecorderRenderer.getInstance().startRecording(audioSavePath);
+            }
             isRecordingRemote = true;
         } catch (IOException e) {
             e.printStackTrace();
@@ -185,6 +188,7 @@ public class EasyRtc {
      * 停止录制远端视频
      */
     public static void stopRecorderRemote() {
+        AudioRecorderRenderer.getInstance().stopRecording();
         if (recorderRemote != null) {
             remoteVideoTrack.removeSink(recorderLocal);
             recorderRemote.release();
@@ -205,17 +209,19 @@ public class EasyRtc {
                 .setFieldTrials("WebRTC-H264HighProfile/Enabled/")
                 .createInitializationOptions();
         PeerConnectionFactory.initialize(initializationOptions);
-        //创建EglBase对象
+        // 创建EglBase对象
         eglBaseContext = EglBase.create().getEglBaseContext();
         PeerConnectionFactory.Options options = new PeerConnectionFactory.Options();
         options.disableEncryption = true;
-        options.disableNetworkMonitor = true;
+        options.disableNetworkMonitor = false;
         peerConnectionFactory = PeerConnectionFactory.builder()
+                .setOptions(options)
+                .setAudioDeviceModule(AudioRecorderRenderer.getInstance().createJavaAudioDevice(ActivityUtils.getTopActivity()))
                 .setVideoDecoderFactory(new DefaultVideoDecoderFactory(eglBaseContext))
                 .setVideoEncoderFactory(new DefaultVideoEncoderFactory(eglBaseContext
                         , true, true))
-                .setOptions(options)
                 .createPeerConnectionFactory();
+        AudioRecorderRenderer.getInstance().releaseAudioDevice();
         // 配置STUN穿透服务器  转发服务器
         iceServers = new ArrayList<>();
         PeerConnection.IceServer iceServer = PeerConnection.IceServer.builder(stunServer).createIceServer();
@@ -224,7 +230,6 @@ public class EasyRtc {
         PeerConnection.RTCConfiguration configuration = new PeerConnection.RTCConfiguration(iceServers);
         PeerConnectionObserver connectionObserver = getObserver();
         peerConnection = peerConnectionFactory.createPeerConnection(configuration, connectionObserver);
-
         // DataChannel.Init 可配参数说明：
         // ordered：是否保证顺序传输；
         // maxRetransmitTimeMs：重传允许的最长时间；
@@ -351,13 +356,13 @@ public class EasyRtc {
         //语音
         MediaConstraints audioConstraints = new MediaConstraints();
         //回声消除
-        audioConstraints.mandatory.add(new MediaConstraints.KeyValuePair("googEchoCancellation", "false"));
+        audioConstraints.mandatory.add(new MediaConstraints.KeyValuePair("googEchoCancellation", "true"));
         //自动增益
-        audioConstraints.mandatory.add(new MediaConstraints.KeyValuePair("googAutoGainControl", "false"));
+        audioConstraints.mandatory.add(new MediaConstraints.KeyValuePair("googAutoGainControl", "true"));
         //高音过滤
-        audioConstraints.mandatory.add(new MediaConstraints.KeyValuePair("googHighpassFilter", "false"));
+        audioConstraints.mandatory.add(new MediaConstraints.KeyValuePair("googHighpassFilter", "true"));
         //噪音处理
-        audioConstraints.mandatory.add(new MediaConstraints.KeyValuePair("googNoiseSuppression", "false"));
+        audioConstraints.mandatory.add(new MediaConstraints.KeyValuePair("googNoiseSuppression", "true"));
         AudioSource audioSource = peerConnectionFactory.createAudioSource(audioConstraints);
         AudioTrack audioTrack = peerConnectionFactory.createAudioTrack(Constant.AUDIO_TRACK_ID, audioSource);
         MediaStream localMediaStream = peerConnectionFactory.createLocalMediaStream(Constant.LOCAL_AUDIO_STREAM);
@@ -457,12 +462,23 @@ public class EasyRtc {
     }
 
     public static void release() {
+        // 断开频道连接
         if (channel != null) {
             channel.unregisterObserver();
             channel.close();
             channel.dispose();
             channel = null;
         }
+        // 停止录音
+        AudioRecorderRenderer.getInstance().stopRecording();
+        // 停止录像
+        if (isRecordingLocal) {
+            recorderLocal.release();
+        }
+        if (isRecordingRemote) {
+            recorderRemote.release();
+        }
+        recorderRemote = null;
         if (peerConnection != null) {
             peerConnection.close();
             peerConnection.dispose();
@@ -482,13 +498,6 @@ public class EasyRtc {
             streamList.clear();
             streamList = null;
         }
-        if (isRecordingLocal){
-            recorderLocal.release();
-        }
-        if (isRecordingRemote){
-            recorderRemote.release();
-        }
-        recorderRemote = null;
         mCallBack = null;
     }
 }

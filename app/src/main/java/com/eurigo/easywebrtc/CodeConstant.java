@@ -29,6 +29,7 @@ public class CodeConstant {
     // 美颜
     public static final int BEAUTY = 107;
 
-    public static final String VIDEO_PATH = PathUtils.getExternalDownloadsPath() + "test.mp4";
+    public static final String LOCAL_VIDEO_PATH = PathUtils.getExternalDownloadsPath() + "/local_";
+    public static final String REMOTE_VIDEO_PATH = PathUtils.getExternalDownloadsPath() + "/remote_";
 
 }

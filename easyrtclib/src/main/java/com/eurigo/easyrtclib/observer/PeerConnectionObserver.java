@@ -1,4 +1,4 @@
-package com.eurigo.easyrtclib;
+package com.eurigo.easyrtclib.observer;
 
 import com.blankj.utilcode.util.LogUtils;
 

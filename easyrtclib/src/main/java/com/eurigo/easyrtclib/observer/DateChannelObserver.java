@@ -1,4 +1,6 @@
-package com.eurigo.easyrtclib;
+package com.eurigo.easyrtclib.observer;
+
+import com.eurigo.easyrtclib.EasyRtcCallBack;
 
 import org.webrtc.DataChannel;
 import org.webrtc.PeerConnection;
