@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity implements EasyRtcCallBack, 
                     @Override
                     public void callback(boolean isAllGranted, @NonNull List<String> granted, @NonNull List<String> deniedForever, @NonNull List<String> denied) {
                         if (isAllGranted) {
-                            EasyRtc.create(Constant.STUN, (MainActivity) ActivityUtils.getTopActivity(), true);
+                            EasyRtc.create(Constant.STUN, (MainActivity) ActivityUtils.getTopActivity());
                             EasyRtc.setLocalView(mBinding.localVideoView);
                             EasyRtc.setRemoteView(mBinding.remoteVideoView);
                             EasyRtc.startLocalVideo();
@@ -108,9 +108,10 @@ public class MainActivity extends AppCompatActivity implements EasyRtcCallBack, 
                     mBinding.btnRecorderLocal.setText("录制本地");
                     ToastUtils.showLong("本地视频录制成功\n" + EasyRtc.getLocalSavePath());
                 } else {
-                    EasyRtc.startRecorderLocal();
-                    mBinding.btnRecorderLocal.setText("停止本地");
-                    ToastUtils.showShort("开始本地视频录制");
+                    if (EasyRtc.startRecorderLocal(true)) {
+                        ToastUtils.showShort("开始本地视频录制");
+                        mBinding.btnRecorderLocal.setText("停止本地");
+                    }
                 }
                 break;
             case R.id.btn_recorder_remote:
@@ -124,21 +125,13 @@ public class MainActivity extends AppCompatActivity implements EasyRtcCallBack, 
                     mBinding.btnRecorderRemote.setText("录制远程");
                     ToastUtils.showLong("远程视频录制成功\n" + EasyRtc.getRemoteSavePath());
                 } else {
-                    EasyRtc.startRecorderRemote();
+                    EasyRtc.startRecorderRemote(true);
                     mBinding.btnRecorderRemote.setText("停止远程");
                     ToastUtils.showShort("开始远程视频录制");
                 }
                 break;
             default:
                 break;
-        }
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (EasyRtc.getPeerConnection() != null) {
-            EasyRtc.getRemoteView().clearImage();
         }
     }
 

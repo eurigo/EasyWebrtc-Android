@@ -23,7 +23,7 @@ import java.nio.ByteBuffer;
 /**
  * @author rostopira
  * desc   : codeSource from https://github.com/flutter-webrtc/flutter-webrtc
- * 录像渲染器
+ * 录制器
  */
 public class VideoFileRenderer implements VideoSink, SamplesReadyCallback {
     private static final String TAG = "VideoFileRenderer";
@@ -40,7 +40,6 @@ public class VideoFileRenderer implements VideoSink, SamplesReadyCallback {
     private EglBase.Context sharedContext;
     private VideoFrameDrawer frameDrawer;
 
-    // TODO: these ought to be configurable as well
     // H.264 Advanced Video Coding
     private static final String MIME_TYPE = "video/avc";
     // 30fps
@@ -114,8 +113,8 @@ public class VideoFileRenderer implements VideoSink, SamplesReadyCallback {
     public void onFrame(VideoFrame frame) {
         frame.retain();
         if (outputFileWidth == -1) {
-            outputFileWidth = frame.getRotatedWidth();
-            outputFileHeight = frame.getRotatedHeight();
+            outputFileWidth = 720;
+            outputFileHeight = 1280;
             initVideoEncoder();
         }
         renderThreadHandler.post(() -> renderFrameOnRenderThread(frame));

@@ -74,36 +74,65 @@ public class EasyRtc {
 
     private static EasyRtcSdpObserver mSdpObserver;
 
+    protected static void setRemoteVideoTrack(VideoTrack remoteVideoTrack) {
+        EasyRtc.remoteVideoTrack = remoteVideoTrack;
+    }
+
+    protected static SurfaceViewRenderer getRemoteView() {
+        return mRemoteView;
+    }
+
     /**
      * 是否有开启录像功能
      */
-    private static boolean enableRecord = false;
     private static VideoFileRenderer mLocalRecorder;
     private static VideoFileRenderer mRemoteRecorder;
     private static String customLocalSavePath;
     private static String customRemoteSavePath;
 
+    /**
+     * 自定义本地视频保存路径
+     *
+     * @param customLocalSavePath 路径
+     */
     public static void setCustomLocalSavePath(String customLocalSavePath) {
         EasyRtc.customLocalSavePath = customLocalSavePath;
     }
 
+    /**
+     * @return 本地录制视频保存路径
+     */
     public static String getLocalSavePath() {
         return TextUtils.isEmpty(customLocalSavePath) ? LOCAL_VIDEO_PATH : customLocalSavePath;
     }
 
+    /**
+     * 自定义远程视频保存路径
+     *
+     * @param customRemoteSavePath 路径
+     */
     public static void setCustomRemoteSavePath(String customRemoteSavePath) {
         EasyRtc.customRemoteSavePath = customRemoteSavePath;
     }
 
+    /**
+     * @return 远程录制视频保存路径
+     */
     public static String getRemoteSavePath() {
         return TextUtils.isEmpty(customRemoteSavePath) ? REMOTE_VIDEO_PATH : customRemoteSavePath;
     }
 
-    public static File getLocalRecorderFile() {
+    /**
+     * @return 本地录制的视频文件
+     */
+    public static File getLocalRecordFile() {
         return FileUtils.getFileByPath(getLocalSavePath());
     }
 
-    public static File getRemoteRecorderFile() {
+    /**
+     * @return 远程录制的视频文件
+     */
+    public static File getRemoteRecordFile() {
         return FileUtils.getFileByPath(getRemoteSavePath());
     }
 
@@ -117,68 +146,92 @@ public class EasyRtc {
      */
     private static boolean isRecordingRemote = false;
 
+    /**
+     * @return 本地录制是否进行中
+     */
     public static boolean isIsRecordingLocal() {
         return isRecordingLocal;
     }
 
+    /**
+     * @return 远程录制是否进行中
+     */
     public static boolean isIsRecordingRemote() {
         return isRecordingRemote && remoteVideoTrack != null;
     }
 
-    public static void setRemoteVideoTrack(VideoTrack remoteVideoTrack) {
-        EasyRtc.remoteVideoTrack = remoteVideoTrack;
-    }
-
-    public static SurfaceViewRenderer getRemoteView() {
-        return mRemoteView;
-    }
-
+    /**
+     * @return P2P连接
+     */
     public static PeerConnection getPeerConnection() {
         return peerConnection;
     }
 
+    /**
+     * @return P2P连接中的数据通道
+     */
     public static DataChannel getChannel() {
         return channel;
     }
 
-    public static void switchCamera() {
+    /**
+     * 切换摄像头
+     *
+     * @return 是否切换成功
+     */
+    public static boolean switchCamera() {
         if (mVideoCapturer != null) {
             mVideoCapturer.switchCamera(null);
+            return true;
         }
-    }
-
-    public static void switchCamera(CameraVideoCapturer.CameraSwitchHandler cameraSwitchHandler) {
-        if (mVideoCapturer != null) {
-            mVideoCapturer.switchCamera(cameraSwitchHandler);
-        }
+        return false;
     }
 
     /**
-     * 录制本地视频，必须调用stopRecorder(), 否则视频黑屏
+     * 切换摄像头
+     *
+     * @param cameraSwitchHandler 相机切换handler
+     * @return 是否切换成功
      */
-    public static void startRecorderLocal() {
-        if (!enableRecord) {
-            ToastUtils.showShort("请在初始化时先开启录像功能");
-            return;
+    public static boolean switchCamera(CameraVideoCapturer.CameraSwitchHandler cameraSwitchHandler) {
+        if (mVideoCapturer != null) {
+            mVideoCapturer.switchCamera(cameraSwitchHandler);
+            return true;
         }
+        return false;
+    }
+
+    /**
+     * 录制本地
+     * 声音录制依托连接回调，如果开启声音录制，必须要先建立远程连接
+     *
+     * @param withAudio 是否录制声音(注意是双方的声音)
+     */
+    public static boolean startRecorderLocal(boolean withAudio) {
         if (isRecordingLocal) {
             ToastUtils.showShort("本地录制已开启");
-            return;
+            return false;
+        }
+        if (withAudio && remoteVideoTrack == null) {
+            ToastUtils.showShort("录制声音必须建立远程连接");
+            return false;
         }
         try {
             FileUtils.createFileByDeleteOldFile(getLocalSavePath());
-            mLocalRecorder = new VideoFileRenderer(getLocalSavePath(), eglBaseContext, true);
+            mLocalRecorder = new VideoFileRenderer(getLocalSavePath(), eglBaseContext, withAudio);
             localVideoTrack.addSink(mLocalRecorder);
             isRecordingLocal = true;
+            return true;
         } catch (IOException e) {
             e.printStackTrace();
             isRecordingLocal = false;
+            return false;
         }
-
     }
 
     /**
-     * 停止录制，
+     * 停止本地录制
+     * 注意：必须和{@link EasyRtc#startRecorderLocal(boolean)} 成对出现，否则视频黑屏
      */
     public static void stopRecorderLocal() {
         if (mLocalRecorder != null) {
@@ -190,15 +243,11 @@ public class EasyRtc {
     }
 
     /**
-     * 开始录制远端视频
-     * <p>
-     * 远端的录制在EasyRtc.OnAddStream()
+     * 录制远程
+     *
+     * @param withAudio 是否包含声音(注意是双方的声音)
      */
-    public static void startRecorderRemote() {
-        if (!enableRecord) {
-            ToastUtils.showShort("请在初始化时先开启录像功能");
-            return;
-        }
+    public static void startRecorderRemote(boolean withAudio) {
         if (isRecordingRemote) {
             ToastUtils.showShort("远程录制已开启");
             return;
@@ -209,7 +258,7 @@ public class EasyRtc {
         }
         try {
             FileUtils.createFileByDeleteOldFile(getRemoteSavePath());
-            mRemoteRecorder = new VideoFileRenderer(getRemoteSavePath(), eglBaseContext, true);
+            mRemoteRecorder = new VideoFileRenderer(getRemoteSavePath(), eglBaseContext, withAudio);
             remoteVideoTrack.addSink(mRemoteRecorder);
             isRecordingRemote = true;
         } catch (IOException e) {
@@ -219,6 +268,7 @@ public class EasyRtc {
 
     /**
      * 停止录制远端视频
+     * 注意：必须和{@link EasyRtc#startRecorderRemote(boolean)} 成对出现，否则视频黑屏
      */
     public static void stopRecorderRemote() {
         if (mRemoteRecorder != null && isRecordingRemote) {
@@ -229,20 +279,14 @@ public class EasyRtc {
         }
     }
 
-    public static void create(String stunServer, EasyRtcCallBack callBack) {
-        create(stunServer, callBack, false);
-    }
-
     /**
      * 初始化
      *
      * @param stunServer      stun服务器地址
      * @param easyRtcCallBack 回调
-     * @param enableRecord    是否开启录像功能
      */
-    public static void create(String stunServer, EasyRtcCallBack easyRtcCallBack, boolean enableRecord) {
+    public static void create(String stunServer, EasyRtcCallBack easyRtcCallBack) {
         mCallBack = easyRtcCallBack;
-        EasyRtc.enableRecord = enableRecord;
         // 初始化 PeerConnectionFactory
         PeerConnectionFactory.InitializationOptions initializationOptions = PeerConnectionFactory
                 .InitializationOptions.builder(Utils.getApp())
@@ -279,34 +323,41 @@ public class EasyRtc {
 
     /**
      * 初始化PeerConnectionFactory
-     * <p>
-     * 必须在初始化的时候设置是否开启录像功能
      *
      * @param options PeerConnectionFactory.Options
      */
     protected static void initPeerConnectionFactory(PeerConnectionFactory.Options options) {
-        if (enableRecord) {
-            peerConnectionFactory = PeerConnectionFactory.builder()
-                    .setOptions(options)
-                    .setAudioDeviceModule(createJavaAudioDeviceModule())
-                    .setVideoDecoderFactory(new DefaultVideoDecoderFactory(eglBaseContext))
-                    .setVideoEncoderFactory(new DefaultVideoEncoderFactory(eglBaseContext
-                            , true, true))
-                    .createPeerConnectionFactory();
-        } else {
-            peerConnectionFactory = PeerConnectionFactory.builder()
-                    .setOptions(options)
-                    .setVideoDecoderFactory(new DefaultVideoDecoderFactory(eglBaseContext))
-                    .setVideoEncoderFactory(new DefaultVideoEncoderFactory(eglBaseContext
-                            , true, true))
-                    .createPeerConnectionFactory();
-        }
+        peerConnectionFactory = PeerConnectionFactory.builder()
+                .setOptions(options)
+                .setAudioDeviceModule(createJavaAudioDeviceModule())
+                .setVideoDecoderFactory(new DefaultVideoDecoderFactory(eglBaseContext))
+                .setVideoEncoderFactory(new DefaultVideoEncoderFactory(eglBaseContext
+                        , true, true))
+                .createPeerConnectionFactory();
     }
 
     /**
-     * 设置本地的视频view
-     *
-     * @param localSurfaceView
+     * 构造声音模型
+     */
+    protected static JavaAudioDeviceModule createJavaAudioDeviceModule() {
+        return JavaAudioDeviceModule.builder(ActivityUtils.getTopActivity())
+                .setAudioSource(MediaRecorder.AudioSource.MIC)
+                .setSamplesReadyCallback(new JavaAudioDeviceModule.SamplesReadyCallback() {
+                    @Override
+                    public void onWebRtcAudioRecordSamplesReady(JavaAudioDeviceModule.AudioSamples audioSamples) {
+                        if (mLocalRecorder != null) {
+                            mLocalRecorder.onWebRtcAudioRecordSamplesReady(audioSamples);
+                        }
+                        if (mRemoteRecorder != null) {
+                            mRemoteRecorder.onWebRtcAudioRecordSamplesReady(audioSamples);
+                        }
+                    }
+                })
+                .createAudioDeviceModule();
+    }
+
+    /**
+     * 设置本地的视频输出view
      */
     public static void setLocalView(SurfaceViewRenderer localSurfaceView) {
         mLocalView = localSurfaceView;
@@ -353,6 +404,9 @@ public class EasyRtc {
         initObserver();
     }
 
+    /**
+     * 设置远程视频输出View
+     */
     public static void setRemoteView(SurfaceViewRenderer mRemoteView) {
         EasyRtc.mRemoteView = mRemoteView;
         mRemoteView.init(eglBaseContext, null);
@@ -381,28 +435,8 @@ public class EasyRtc {
         peerConnection.addIceCandidate(iceCandidate);
     }
 
-    private static JavaAudioDeviceModule createJavaAudioDeviceModule() {
-        return JavaAudioDeviceModule.builder(ActivityUtils.getTopActivity())
-                .setSamplesReadyCallback(new JavaAudioDeviceModule.SamplesReadyCallback() {
-                    @Override
-                    public void onWebRtcAudioRecordSamplesReady(JavaAudioDeviceModule.AudioSamples audioSamples) {
-                        if (mLocalRecorder != null) {
-                            mLocalRecorder.onWebRtcAudioRecordSamplesReady(audioSamples);
-                        }
-                        if (mRemoteRecorder != null) {
-                            mRemoteRecorder.onWebRtcAudioRecordSamplesReady(audioSamples);
-                        }
-                    }
-                })
-                .setAudioSource(MediaRecorder.AudioSource.VOICE_COMMUNICATION)
-                .createAudioDeviceModule();
-    }
-
-
     /**
      * 判断使用Camera1还是Camera2
-     *
-     * @return VideoCapturer
      */
     private static CameraVideoCapturer createCameraCapturer(boolean isUseFront) {
         Context context = ActivityUtils.getTopActivity();
@@ -439,7 +473,7 @@ public class EasyRtc {
     }
 
     /**
-     * 创建本地音频
+     * 创建本地音频数据
      */
     private static void startLocalAudioCapture() {
         //语音
@@ -541,8 +575,10 @@ public class EasyRtc {
         peerConnection.createAnswer(mSdpObserver, mediaConstraints);
     }
 
+    /**
+     * release
+     */
     public static void release() {
-
         // 断开频道连接
         if (channel != null) {
             channel.unregisterObserver();
@@ -554,10 +590,12 @@ public class EasyRtc {
         if (isRecordingLocal) {
             mLocalRecorder.release();
         }
+        mLocalRecorder = null;
         if (isRecordingRemote) {
             mRemoteRecorder.release();
         }
         mRemoteRecorder = null;
+        // 断开P2P连接
         if (peerConnection != null) {
             peerConnection.close();
             peerConnection.dispose();
@@ -578,9 +616,6 @@ public class EasyRtc {
             streamList = null;
         }
         mCallBack = null;
-        enableRecord = false;
-        mLocalRecorder = null;
-        mRemoteRecorder = null;
         customLocalSavePath = null;
         customRemoteSavePath = null;
     }
