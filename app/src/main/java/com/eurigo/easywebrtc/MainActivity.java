@@ -1,8 +1,5 @@
 package com.eurigo.easywebrtc;
 
-import static com.eurigo.easywebrtc.CodeConstant.LOCAL_VIDEO_PATH;
-import static com.eurigo.easywebrtc.CodeConstant.REMOTE_VIDEO_PATH;
-
 import android.annotation.SuppressLint;
 import android.content.res.ColorStateList;
 import android.os.Bundle;
@@ -15,13 +12,10 @@ import com.blankj.utilcode.constant.PermissionConstants;
 import com.blankj.utilcode.util.ActivityUtils;
 import com.blankj.utilcode.util.ColorUtils;
 import com.blankj.utilcode.util.DeviceUtils;
-import com.blankj.utilcode.util.FileUtils;
 import com.blankj.utilcode.util.GsonUtils;
 import com.blankj.utilcode.util.LogUtils;
-import com.blankj.utilcode.util.PathUtils;
 import com.blankj.utilcode.util.PermissionUtils;
 import com.blankj.utilcode.util.ThreadUtils;
-import com.blankj.utilcode.util.TimeUtils;
 import com.blankj.utilcode.util.ToastUtils;
 import com.eurigo.easyrtclib.Constant;
 import com.eurigo.easyrtclib.EasyRtc;
@@ -47,12 +41,9 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity implements EasyRtcCallBack, IWsListener
         , View.OnClickListener {
 
-    private static final String WS_URL = "ws://beucfj.natappfree.cc/myWs/" + DeviceUtils.getAndroidID();
+    private static final String WS_URL = "ws://192.168.0.84:8763/myWs/" + DeviceUtils.getAndroidID();
 
     private ActivityMainBinding mBinding;
-
-    private String localFileName;
-    private String remoteFileName;
 
     private boolean isRtcConnect = false;
 
@@ -84,7 +75,7 @@ public class MainActivity extends AppCompatActivity implements EasyRtcCallBack, 
                     @Override
                     public void callback(boolean isAllGranted, @NonNull List<String> granted, @NonNull List<String> deniedForever, @NonNull List<String> denied) {
                         if (isAllGranted) {
-                            EasyRtc.create(Constant.STUN, (MainActivity) ActivityUtils.getTopActivity());
+                            EasyRtc.create(Constant.STUN, (MainActivity) ActivityUtils.getTopActivity(), true);
                             EasyRtc.setLocalView(mBinding.localVideoView);
                             EasyRtc.setRemoteView(mBinding.remoteVideoView);
                             EasyRtc.startLocalVideo();
@@ -115,12 +106,9 @@ public class MainActivity extends AppCompatActivity implements EasyRtcCallBack, 
                 if (EasyRtc.isIsRecordingLocal()) {
                     EasyRtc.stopRecorderLocal();
                     mBinding.btnRecorderLocal.setText("录制本地");
-                    if (FileUtils.isFileExists(localFileName)) {
-                        ToastUtils.showLong("本地视频录制成功\n" + localFileName);
-                    }
+                    ToastUtils.showLong("本地视频录制成功\n" + EasyRtc.getLocalSavePath());
                 } else {
-                    localFileName = LOCAL_VIDEO_PATH + TimeUtils.getNowString() + ".mp4";
-                    EasyRtc.startRecorderLocal(localFileName);
+                    EasyRtc.startRecorderLocal();
                     mBinding.btnRecorderLocal.setText("停止本地");
                     ToastUtils.showShort("开始本地视频录制");
                 }
@@ -134,12 +122,9 @@ public class MainActivity extends AppCompatActivity implements EasyRtcCallBack, 
                 if (EasyRtc.isIsRecordingRemote()) {
                     EasyRtc.stopRecorderRemote();
                     mBinding.btnRecorderRemote.setText("录制远程");
-                    if (FileUtils.isFileExists(remoteFileName)) {
-                        ToastUtils.showLong("远程视频录制成功\n" + remoteFileName);
-                    }
+                    ToastUtils.showLong("远程视频录制成功\n" + EasyRtc.getRemoteSavePath());
                 } else {
-                    remoteFileName = REMOTE_VIDEO_PATH + TimeUtils.getNowString() + ".mp4";
-                    EasyRtc.startRecorderRemote(remoteFileName, true, PathUtils.getExternalDownloadsPath() + "/audio.pcm");
+                    EasyRtc.startRecorderRemote();
                     mBinding.btnRecorderRemote.setText("停止远程");
                     ToastUtils.showShort("开始远程视频录制");
                 }
@@ -244,7 +229,6 @@ public class MainActivity extends AppCompatActivity implements EasyRtcCallBack, 
 
     @Override
     public void onMessage(WsClient client, String message) {
-        LogUtils.eTag("xxx", message);
         // 1、解析消息
         WsData wsData = GsonUtils.fromJson(message, WsData.class);
         switch (wsData.getCode()) {

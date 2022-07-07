@@ -1,7 +1,5 @@
 package com.eurigo.easywebrtc;
 
-import com.blankj.utilcode.util.PathUtils;
-
 /**
  * @author Eurigo
  * Created on 2022/6/29 16:01
@@ -28,8 +26,4 @@ public class CodeConstant {
     public static final int FILTER = 106;
     // 美颜
     public static final int BEAUTY = 107;
-
-    public static final String LOCAL_VIDEO_PATH = PathUtils.getExternalDownloadsPath() + "/local_";
-    public static final String REMOTE_VIDEO_PATH = PathUtils.getExternalDownloadsPath() + "/remote_";
-
 }
