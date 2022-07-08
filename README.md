@@ -6,7 +6,7 @@
 <a href="#6">关于几个重要回调说明</a>  
 <a href="#7">其他问题</a>  
 
-# EasyWebrtc-Android[![](https://jitpack.io/v/eurigo/EasyWebrtc.svg)](https://jitpack.io/#eurigo/EasyWebrtc)
+# EasyWebrtc-Android[![](https://jitpack.io/v/eurigo/EasyWebrtc-Android.svg)](https://jitpack.io/#eurigo/EasyWebrtc-Android)
 
 - 支持动态本地视频录制
 - 支持动态远程视频录制
