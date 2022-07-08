@@ -202,6 +202,15 @@ public class EasyRtc {
     }
 
     /**
+     * 录制声音
+     *
+     * @return 是否开启成功
+     */
+    public static boolean startRecorderLocal() {
+        return startRecorderLocal(true);
+    }
+
+    /**
      * 录制本地
      * 声音录制依托连接回调，如果开启声音录制，必须要先建立远程连接
      *
@@ -240,6 +249,13 @@ public class EasyRtc {
             mLocalRecorder = null;
             isRecordingLocal = false;
         }
+    }
+
+    /**
+     * 录制远程声音
+     */
+    public static void startRecorderRemote() {
+        startRecorderRemote(true);
     }
 
     /**
