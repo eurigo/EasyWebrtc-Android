@@ -8,9 +8,10 @@
 
 # EasyWebrtc-Android[![](https://jitpack.io/v/eurigo/EasyWebrtc.svg)](https://jitpack.io/#eurigo/EasyWebrtc)
 
-### Android的WebRtc实现
-
-> 只需要几行带代码就可以视频通话
+- 支持动态本地视频录制
+- 支持动态远程视频录制
+- 支持动态相机切换
+- 支持自定义设置录制视频保存路径
 
 ### <a name="2">集成</a>
 
@@ -45,6 +46,14 @@ dependencies {
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
 />
 ```
+
++ 在Layout中配置
+```xml
+    <org.webrtc.SurfaceViewRenderer
+        android:id="@+id/local_video_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+```
 ### <a name="3">开启摄像头</a>
 ```java
 // 配置STUN服务器地址，设置回调	
@@ -56,17 +65,18 @@ EasyRtc.startLocalVideo();
 ```
 ### <a name="4">建立连接</a>
 ```java
-// 配置STUN服务器地址，设置回调	
 EasyRtc.createOffer();
 ```
 ### <a name="4-1">视频录制</a>
 > 视频录制分为录制远程和录制本地，start和stop需成对出现
 ```java
-// 开启录制本地源 	
-EasyRtc.startRecorderLocal(String savePath);
+// 开启录制本地	
+EasyRtc.startRecorderLocal();
+// 停止本地录制
 EasyRtc.stopRecorderLocal();
-// 开启录制远程源
-EasyRtc.startRecorderRemote(String savePath);
+// 开启录制远程
+EasyRtc.startRecorderRemote();
+// 停止远程录制
 EasyRtc.stopRecorderRemote();
 ```
 ### <a name="5">销毁</a>
@@ -140,5 +150,16 @@ EasyRtc.release();
     }
 ```
 
-### <a name="7">其他问题</a>
-  参考MainActivity
+### <a name="7">其他API</a>
+| 方法                     | 说明                   |
+| ------------------------ | ---------------------- |
+| getPeerConnection()      | P2P连接                |
+| getChannel()             | P2P连接中的数据通道    |
+| getLocalRecordFile()     | 本地录制的视频文件     |
+| getLocalSavePath()       | 本地录制视频保存路径   |
+| setCustomLocalSavePath() | 自定义本地视频保存路径 |
+| getRemoteRecordFile()    | 远程录制的视频文件     |
+| getRemoteSavePath()      | 远程录制视频保存路径   |
+| setCustomRemoteSavePath  | 自定义远程视频保存路径 |
+| switchCamera()           | 切换摄像头             |
+  
