@@ -30,6 +30,6 @@ public class Constant {
     public static final String LOCAL_VIDEO_STREAM = "localVideoStream";
     public static final String LOCAL_AUDIO_STREAM = "localAudioStream";
 
-    protected static final String LOCAL_VIDEO_PATH = PathUtils.getAppDataPathExternalFirst() + "/local_" + TimeUtils.getNowString() + ".mp4";
-    protected static final String REMOTE_VIDEO_PATH = PathUtils.getAppDataPathExternalFirst() + "/remote_" + TimeUtils.getNowString() + ".mp4";
+    public static final String LOCAL_VIDEO_PATH = PathUtils.getAppDataPathExternalFirst() + "/local_" + TimeUtils.getNowString() + ".mp4";
+    public static final String REMOTE_VIDEO_PATH = PathUtils.getAppDataPathExternalFirst() + "/remote_" + TimeUtils.getNowString() + ".mp4";
 }
