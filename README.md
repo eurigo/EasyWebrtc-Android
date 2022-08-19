@@ -29,7 +29,7 @@ allprojects {
 ```groovy
 dependencies {
     // 请用最后release版本替换Tag
-    implementation 'com.github.eurigo:EasyWebrtc:Tag'
+    implementation 'com.github.eurigo:EasyWebrtc:1.0.0'
 }
 ```
 
